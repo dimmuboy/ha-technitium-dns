@@ -132,6 +132,27 @@ class TechnitiumClient:
             ignore_api_error=True,
         )
 
+    async def async_get_blocking_state(self) -> dict[str, Any]:
+        """Return the current blocking state."""
+        data = await self._get("/api/settings/get")
+        response = data.get("response", {})
+        return {
+            "enabled": bool(response.get("enableBlocking", False)),
+            "temporary_disable_until": response.get("temporaryDisableBlockingTill"),
+        }
+
+    async def async_set_blocking(self, enabled: bool) -> dict[str, Any]:
+        """Enable or disable blocking persistently."""
+        data = await self._get(
+            "/api/settings/set",
+            {"enableBlocking": str(enabled).lower()},
+        )
+        response = data.get("response", {})
+        return {
+            "enabled": bool(response.get("enableBlocking", enabled)),
+            "temporary_disable_until": response.get("temporaryDisableBlockingTill"),
+        }
+
     async def async_pause_blocking(self, minutes: int) -> str | None:
         """Temporarily disable Technitium blocking."""
         data = await self._get(
@@ -139,3 +160,24 @@ class TechnitiumClient:
             {"minutes": minutes},
         )
         return data.get("response", {}).get("temporaryDisableBlockingTill")
+
+    async def async_dashboard_stats(self, stats_type: str) -> dict[str, Any]:
+        """Return Technitium dashboard statistics."""
+        allowed_types = {
+            "LastHour",
+            "LastDay",
+            "LastWeek",
+            "LastMonth",
+            "LastYear",
+        }
+        if stats_type not in allowed_types:
+            raise TechnitiumApiError(f"Unsupported dashboard stats type: {stats_type}")
+
+        data = await self._get(
+            "/api/dashboard/stats/get",
+            {
+                "type": stats_type,
+                "utc": "true",
+            },
+        )
+        return data.get("response", {})
