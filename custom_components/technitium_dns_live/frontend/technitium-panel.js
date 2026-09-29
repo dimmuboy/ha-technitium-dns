@@ -21,7 +21,11 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    this._render();
+
+    if (!this._initialized) {
+      this._render();
+    }
+
     this._updatePolling();
   }
 
@@ -41,7 +45,10 @@ class TechnitiumDnsLivePanel extends HTMLElement {
     });
 
     this._observer.observe(this);
-    this._render();
+
+    if (!this._initialized) {
+      this._render();
+    }
   }
 
   disconnectedCallback() {
@@ -107,7 +114,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
       this._status = `Error: ${error?.message || error}`;
     } finally {
       this._loading = false;
-      this._render();
+      this._renderData();
     }
   }
 
@@ -126,7 +133,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
       await this._refresh();
     } catch (error) {
       this._status = `Error: ${error?.message || error}`;
-      this._render();
+      this._renderData();
     }
   }
 
@@ -163,7 +170,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
       this._status = `Error: ${error?.message || error}`;
     }
 
-    this._render();
+    this._renderData();
   }
 
   _escape(value) {
@@ -259,7 +266,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         button.danger {
           background: var(--error-color);
-          color: white;
+          color: #111;
           border-color: var(--error-color);
         }
 
@@ -385,63 +392,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
             <button id="manual-block" class="danger">BLOCK</button>
           </div>
 
-          <div class="status">
-            ${this._escape(
-              this._status ||
-                `${entries.length} latest queries · polling only while this panel is visible`,
-            )}
-          </div>
-
-          ${
-            entries.length
-              ? entries
-                  .map((entry) => {
-                    const blocked = this._isBlocked(entry);
-                    const domain = this._escape(entry.qname);
-
-                    return `
-                      <div class="row">
-                        <div class="time meta">${this._escape(
-                          this._formatTime(entry.timestamp),
-                        )}</div>
-
-                        <div
-                          class="domain"
-                          data-copy-domain="${domain}"
-                          title="Tap to copy into the manual domain field"
-                        >
-                          ${domain}
-                          <div class="meta">
-                            ${this._escape(entry.qtype)} ·
-                            ${this._escape(entry.protocol)}
-                          </div>
-                        </div>
-
-                        <div class="response ${
-                          blocked ? "blocked" : "ok"
-                        }">
-                          ${this._escape(entry.responseType)}
-                        </div>
-
-                        <div class="client meta">
-                          ${this._escape(entry.clientIpAddress)}
-                        </div>
-
-                        <div class="action">
-                          <button
-                            data-action="${blocked ? "allow" : "block"}"
-                            data-domain="${domain}"
-                            class="${blocked ? "primary" : "danger"}"
-                          >
-                            ${blocked ? "ALLOW" : "BLOCK"}
-                          </button>
-                        </div>
-                      </div>
-                    `;
-                  })
-                  .join("")
-              : `<div class="empty">No query data available.</div>`
-          }
+          <div class="status" id="status"></div>
+          <div id="entries"></div>
         </div>
       </div>
     `;
@@ -483,25 +435,104 @@ class TechnitiumDnsLivePanel extends HTMLElement {
       .querySelector("#manual-block")
       ?.addEventListener("click", () => this._block(this._manualDomain));
 
-    this.shadowRoot.querySelectorAll("[data-copy-domain]").forEach((element) => {
-      element.addEventListener("click", () => {
-        this._manualDomain = element.dataset.copyDomain || "";
-        this._render();
-        this.shadowRoot.querySelector("#manual-domain")?.focus();
-      });
-    });
+    this.shadowRoot.querySelector("#entries")?.addEventListener("click", (event) => {
+      const copyTarget = event.target.closest("[data-copy-domain]");
 
-    this.shadowRoot.querySelectorAll("[data-action]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const domain = button.dataset.domain;
+      if (copyTarget) {
+        this._manualDomain = copyTarget.dataset.copyDomain || "";
 
-        if (button.dataset.action === "allow") {
-          this._allow(domain);
-        } else {
-          this._block(domain);
+        const input = this.shadowRoot.querySelector("#manual-domain");
+        if (input) {
+          input.value = this._manualDomain;
+          input.focus();
         }
-      });
+
+        return;
+      }
+
+      const button = event.target.closest("[data-action]");
+      if (!button) {
+        return;
+      }
+
+      const domain = button.dataset.domain;
+
+      if (button.dataset.action === "allow") {
+        this._allow(domain);
+      } else {
+        this._block(domain);
+      }
     });
+
+    this._initialized = true;
+    this._renderData();
+  }
+
+  _renderData() {
+    if (!this.shadowRoot || !this._initialized) {
+      return;
+    }
+
+    const entries = this._entries || [];
+    const status = this.shadowRoot.querySelector("#status");
+    const entriesContainer = this.shadowRoot.querySelector("#entries");
+
+    if (status) {
+      status.textContent =
+        this._status ||
+        `${entries.length} latest queries · polling only while this panel is visible`;
+    }
+
+    if (!entriesContainer) {
+      return;
+    }
+
+    entriesContainer.innerHTML = entries.length
+      ? entries
+          .map((entry) => {
+            const blocked = this._isBlocked(entry);
+            const domain = this._escape(entry.qname);
+
+            return `
+              <div class="row">
+                <div class="time meta">${this._escape(
+                  this._formatTime(entry.timestamp),
+                )}</div>
+
+                <div
+                  class="domain"
+                  data-copy-domain="${domain}"
+                  title="Tap to copy into the manual domain field"
+                >
+                  ${domain}
+                  <div class="meta">
+                    ${this._escape(entry.qtype)} ·
+                    ${this._escape(entry.protocol)}
+                  </div>
+                </div>
+
+                <div class="response ${blocked ? "blocked" : "ok"}">
+                  ${this._escape(entry.responseType)}
+                </div>
+
+                <div class="client meta">
+                  ${this._escape(entry.clientIpAddress)}
+                </div>
+
+                <div class="action">
+                  <button
+                    data-action="${blocked ? "allow" : "block"}"
+                    data-domain="${domain}"
+                    class="${blocked ? "primary" : "danger"}"
+                  >
+                    ${blocked ? "ALLOW" : "BLOCK"}
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join("")
+      : `<div class="empty">No query data available.</div>`;
   }
 }
 
