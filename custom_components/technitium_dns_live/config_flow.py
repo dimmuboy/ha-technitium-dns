@@ -57,10 +57,7 @@ class TechnitiumDnsLiveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        CONF_BASE_URL,
-                        default="http://technitium.example:5380",
-                    ): str,
+                    vol.Required(CONF_BASE_URL): str,
                     vol.Required(CONF_TOKEN): str,
                     vol.Required(CONF_VERIFY_SSL, default=True): bool,
                 }
