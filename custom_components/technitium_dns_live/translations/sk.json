@@ -1,0 +1,22 @@
+{
+  "title": "Technitium DNS Live",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pripojenie k Technitium DNS",
+        "description": "Použi samostatný API token s právami Logs, Allowed, Blocked, Cache a Settings.",
+        "data": {
+          "base_url": "Základná URL Technitium",
+          "token": "API token",
+          "verify_ssl": "Overovať TLS certifikát"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nepodarilo sa pripojiť k Technitiu alebo chýba Query Logs app."
+    },
+    "abort": {
+      "already_configured": "Tento Technitium server už je nakonfigurovaný."
+    }
+  }
+}
