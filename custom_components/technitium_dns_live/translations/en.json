@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect to Technitium DNS",
-        "description": "Use a dedicated API token with Logs, Allowed, Blocked, Cache and Settings permissions.",
+        "description": "Use a dedicated API token with Logs, Allowed, Blocked, Cache, Settings (View + Modify) and Dashboard (View) permissions.",
         "data": {
           "base_url": "Technitium base URL",
           "token": "API token",
