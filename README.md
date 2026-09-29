@@ -27,6 +27,11 @@ Use a dedicated Technitium user/API token with:
 
 `Settings: View + Modify` is used for the live blocking state, the persistent blocking switch and temporary pause buttons. `Dashboard: View` is required for the Statistics tab.
 
+
+## Development
+
+This integration was entirely vibe-coded with ChatGPT.
+
 ## Installation
 
 Add this repository to HACS as a custom Integration repository, install it, then restart Home Assistant.
