@@ -1,0 +1,22 @@
+{
+  "title": "Technitium DNS Live",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Technitium DNS",
+        "description": "Use a dedicated API token with Logs, Allowed, Blocked, Cache and Settings permissions.",
+        "data": {
+          "base_url": "Technitium base URL",
+          "token": "API token",
+          "verify_ssl": "Verify TLS certificate"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Technitium or no Query Logs app was found."
+    },
+    "abort": {
+      "already_configured": "This Technitium server is already configured."
+    }
+  }
+}
