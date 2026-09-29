@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Pripojenie k Technitium DNS",
-        "description": "Použi samostatný API token s právami Logs, Allowed, Blocked, Cache a Settings.",
+        "description": "Použi samostatný API token s právami Logs, Allowed, Blocked, Cache, Settings (View + Modify) a Dashboard (View).",
         "data": {
           "base_url": "Základná URL Technitium",
           "token": "API token",
