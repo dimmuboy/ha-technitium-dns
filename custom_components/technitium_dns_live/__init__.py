@@ -140,6 +140,74 @@ async def websocket_pause(
     )
 
 
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/blocking_state",
+    }
+)
+@websocket_api.async_response
+async def websocket_blocking_state(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Return the current Technitium blocking state."""
+    try:
+        state = await _get_client(hass).async_get_blocking_state()
+    except TechnitiumApiError as err:
+        connection.send_error(msg["id"], "technitium_error", str(err))
+        return
+
+    connection.send_result(msg["id"], state)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_blocking",
+        vol.Required("enabled"): bool,
+    }
+)
+@websocket_api.async_response
+async def websocket_set_blocking(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Enable or disable Technitium blocking."""
+    try:
+        state = await _get_client(hass).async_set_blocking(msg["enabled"])
+    except TechnitiumApiError as err:
+        connection.send_error(msg["id"], "technitium_error", str(err))
+        return
+
+    connection.send_result(msg["id"], state)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/stats",
+        vol.Optional("stats_type", default="LastDay"): vol.In(
+            ["LastHour", "LastDay", "LastWeek", "LastMonth", "LastYear"]
+        ),
+    }
+)
+@websocket_api.async_response
+async def websocket_stats(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Return Technitium dashboard statistics."""
+    try:
+        response = await _get_client(hass).async_dashboard_stats(msg["stats_type"])
+    except TechnitiumApiError as err:
+        connection.send_error(msg["id"], "technitium_error", str(err))
+        return
+
+    connection.send_result(msg["id"], response)
+
+
 async def _async_register_panel(hass: HomeAssistant) -> None:
     """Register the DNS Live sidebar panel."""
     domain_data = hass.data.setdefault(DOMAIN, {})
@@ -185,6 +253,9 @@ async def _async_register_websockets(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, websocket_allow)
     websocket_api.async_register_command(hass, websocket_block)
     websocket_api.async_register_command(hass, websocket_pause)
+    websocket_api.async_register_command(hass, websocket_blocking_state)
+    websocket_api.async_register_command(hass, websocket_set_blocking)
+    websocket_api.async_register_command(hass, websocket_stats)
 
     domain_data[DATA_WS_REGISTERED] = True
 
