@@ -537,13 +537,13 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         }
 
         button.primary {
-          background: var(--md-sys-color-primary, var(--primary-color));
-          color: var(--md-sys-color-on-primary, var(--text-primary-color));
+          background: var(--primary-color);
+          color: var(--text-primary-color);
         }
 
         button.danger {
-          background: var(--md-sys-color-error-container, var(--error-color));
-          color: var(--md-sys-color-on-error-container, #111);
+          background: var(--error-color);
+          color: #111;
         }
 
         button.paused {
@@ -639,6 +639,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         }
 
         .stats-grid {
+          position: relative;
+          z-index: 1;
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
@@ -671,10 +673,13 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         }
 
         .stats-content {
+          position: relative;
+          z-index: 2;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
           padding: 0 14px 14px;
+          overflow: visible;
         }
 
         .panel-card {
@@ -686,6 +691,12 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           overflow: hidden;
         }
 
+        .panel-card.chart-card {
+          position: relative;
+          z-index: 10;
+          overflow: visible;
+        }
+
         .panel-title {
           font-size: 16px;
           font-weight: 600;
@@ -694,6 +705,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         .chart-wrap {
           position: relative;
+          z-index: 11;
+          overflow: visible;
         }
 
         .chart {
@@ -1266,7 +1279,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
       </div>
 
       <div class="stats-content">
-        <div class="panel-card" style="grid-column: 1 / -1;">
+        <div class="panel-card chart-card" style="grid-column: 1 / -1;">
           <div class="panel-title">Queries over time</div>
           ${bars
             ? `
