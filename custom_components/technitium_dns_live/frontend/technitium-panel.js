@@ -1342,9 +1342,20 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         <div>Queries: <b>${this._formatNumber(total)}</b></div>
         <div>Blocked: <b>${this._formatNumber(blockedValue)}</b></div>
       `;
-      tooltip.style.left = `${pointRect.left - wrapRect.left + pointRect.width / 2}px`;
-      tooltip.style.top = `${pointRect.top - wrapRect.top}px`;
+
       tooltip.classList.add("visible");
+
+      const tooltipWidth = tooltip.offsetWidth;
+      const halfTooltip = tooltipWidth / 2;
+      const desiredCenter =
+        pointRect.left - wrapRect.left + pointRect.width / 2;
+      const safeCenter = Math.min(
+        Math.max(desiredCenter, halfTooltip + 6),
+        wrapRect.width - halfTooltip - 6,
+      );
+
+      tooltip.style.left = `${safeCenter}px`;
+      tooltip.style.top = `${pointRect.top - wrapRect.top}px`;
     };
 
     const hideTooltip = () => {
