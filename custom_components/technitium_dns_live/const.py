@@ -10,6 +10,6 @@ DATA_WS_REGISTERED = "ws_registered"
 
 PANEL_URL = "technitium-dns-live"
 PANEL_TITLE = "DNS Live"
-PANEL_ICON = "mdi:dns"
+PANEL_ICON = "mdi:server-security"
 FRONTEND_URL = "/technitium_dns_live"
-FRONTEND_VERSION = "0.2.4"
+FRONTEND_VERSION = "0.2.5"
