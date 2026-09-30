@@ -424,11 +424,11 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
   _statsPeriodDescription() {
     const descriptions = {
-      LastHour: "Last 60 minutes · 1-minute buckets",
-      LastDay: "Last 24 hours · 1-hour buckets",
-      LastWeek: "Last 7 days · daily buckets",
-      LastMonth: "Last 31 days · daily buckets",
-      LastYear: "Last 12 months · monthly buckets",
+      LastHour: "Rolling 60 minutes · 1-minute buckets",
+      LastDay: "24 completed hours · 1-hour buckets",
+      LastWeek: "7 completed days · daily buckets",
+      LastMonth: "31 completed days · daily buckets",
+      LastYear: "12 completed months · monthly buckets",
     };
     return descriptions[this._statsType] || "";
   }
@@ -1141,16 +1141,21 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
     if (status) {
       const updated = this._statsLastUpdated
-        ? ` · updated ${this._statsLastUpdated.toLocaleTimeString([], {
+        ? ` · refreshed ${this._statsLastUpdated.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
           })}`
         : "";
+      const statusLabels = this._stats?.mainChartData?.labels || [];
+      const lastBucket = statusLabels[statusLabels.length - 1];
+      const through = lastBucket
+        ? ` · data through ${this._formatStatsAxisLabel(lastBucket)}`
+        : "";
 
       status.textContent =
         this._statsStatus ||
-        `${this._statsPeriodDescription()}${updated} · auto refresh 30 s`;
+        `${this._statsPeriodDescription()}${through}${updated} · auto refresh 30 s`;
     }
 
     if (!container) {
