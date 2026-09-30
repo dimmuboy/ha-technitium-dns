@@ -786,6 +786,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           display: block;
           margin-bottom: 4px;
           font-size: 13px;
+          white-space: nowrap;
         }
 
         .chart-legend {
