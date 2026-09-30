@@ -25,6 +25,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
     this._statsType = "LastDay";
     this._stats = null;
     this._statsStatus = "";
+    this._statsLastUpdated = null;
 
     this._onVisibilityChange = () => {
       this._visible = document.visibilityState === "visible";
@@ -255,6 +256,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         type: "technitium_dns_live/stats",
         stats_type: this._statsType,
       });
+      this._statsLastUpdated = new Date();
       this._statsStatus = "";
     } catch (error) {
       this._statsStatus = `Error: ${error?.message || error}`;
@@ -357,6 +359,80 @@ class TechnitiumDnsLivePanel extends HTMLElement {
     return new Intl.NumberFormat().format(Number(value || 0));
   }
 
+  _formatStatsAxisLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value || "");
+    }
+
+    if (this._statsType === "LastHour") {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    if (this._statsType === "LastDay") {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    if (this._statsType === "LastWeek" || this._statsType === "LastMonth") {
+      return date.toLocaleDateString([], { day: "2-digit", month: "short" });
+    }
+
+    return date.toLocaleDateString([], { month: "short", year: "numeric" });
+  }
+
+  _formatStatsTooltipLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value || "");
+    }
+
+    if (this._statsType === "LastHour") {
+      const start = new Date(date.getTime() - 60 * 1000);
+      return `${start.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}–${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+
+    if (this._statsType === "LastDay") {
+      const start = new Date(date.getTime() - 60 * 60 * 1000);
+      return `${start.toLocaleDateString([], {
+        day: "2-digit",
+        month: "short",
+      })}, ${start.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}–${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+
+    if (this._statsType === "LastWeek" || this._statsType === "LastMonth") {
+      return date.toLocaleDateString([], {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+      });
+    }
+
+    return date.toLocaleDateString([], { month: "long", year: "numeric" });
+  }
+
+  _statsPeriodDescription() {
+    const descriptions = {
+      LastHour: "Last 60 minutes · 1-minute buckets",
+      LastDay: "Last 24 hours · 1-hour buckets",
+      LastWeek: "Last 7 days · daily buckets",
+      LastMonth: "Last 31 days · daily buckets",
+      LastYear: "Last 12 months · monthly buckets",
+    };
+    return descriptions[this._statsType] || "";
+  }
+
   _isBlocked(entry) {
     return ["Blocked", "UpstreamBlocked", "CacheBlocked"].includes(
       entry.responseType,
@@ -373,8 +449,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         :host {
           display: block;
           min-height: 100%;
-          background: var(--primary-background-color);
-          color: var(--primary-text-color);
+          background: var(--md-sys-color-surface, var(--primary-background-color));
+          color: var(--md-sys-color-on-surface, var(--primary-text-color));
         }
 
         .page {
@@ -387,9 +463,9 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         .card,
         .stat-card,
         .panel-card {
-          background: var(--card-background-color);
-          border-radius: var(--ha-card-border-radius, 12px);
-          box-shadow: var(--ha-card-box-shadow);
+          background: var(--md-sys-color-surface-container-low, var(--card-background-color));
+          border-radius: var(--md-sys-shape-corner-extra-large, var(--ha-card-border-radius, 28px));
+          box-shadow: var(--md-sys-elevation-level1, var(--ha-card-box-shadow));
         }
 
         .card {
@@ -398,21 +474,23 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         .tabs {
           display: flex;
-          gap: 4px;
-          padding: 8px;
-          border-bottom: 1px solid var(--divider-color);
+          gap: 6px;
+          padding: 10px;
+          background: var(--md-sys-color-surface-container, var(--secondary-background-color));
         }
 
         .tabs button {
           border: 0;
+          border-radius: var(--md-sys-shape-corner-full, 9999px);
           background: transparent;
-          color: var(--secondary-text-color);
+          color: var(--md-sys-color-on-surface-variant, var(--secondary-text-color));
           font-weight: 600;
+          padding-inline: 18px;
         }
 
         .tabs button.active {
-          color: var(--primary-color);
-          background: var(--secondary-background-color);
+          color: var(--md-sys-color-on-primary-container, var(--primary-text-color));
+          background: var(--md-sys-color-primary-container, var(--primary-color));
         }
 
         .toolbar {
@@ -421,7 +499,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           gap: 8px;
           align-items: center;
           padding: 14px;
-          border-bottom: 1px solid var(--divider-color);
+          border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--divider-color));
         }
 
         .title {
@@ -433,11 +511,11 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         select,
         input,
         button {
-          min-height: 38px;
-          border-radius: 8px;
-          border: 1px solid var(--divider-color);
-          background: var(--secondary-background-color);
-          color: var(--primary-text-color);
+          min-height: 40px;
+          border-radius: var(--md-sys-shape-corner-full, 9999px);
+          border: 1px solid var(--md-sys-color-outline, var(--divider-color));
+          background: var(--md-sys-color-surface-container-high, var(--secondary-background-color));
+          color: var(--md-sys-color-on-surface, var(--primary-text-color));
           padding: 7px 10px;
           font: inherit;
           box-sizing: border-box;
@@ -445,18 +523,27 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         button {
           cursor: pointer;
+          border: 0;
+          font-weight: 600;
+          transition: filter 120ms ease, transform 120ms ease, background 120ms ease;
+        }
+
+        button:hover {
+          filter: brightness(1.04);
+        }
+
+        button:active {
+          transform: scale(0.98);
         }
 
         button.primary {
-          background: var(--primary-color);
-          color: var(--text-primary-color);
-          border-color: var(--primary-color);
+          background: var(--md-sys-color-primary, var(--primary-color));
+          color: var(--md-sys-color-on-primary, var(--text-primary-color));
         }
 
         button.danger {
-          background: var(--error-color);
-          color: #111;
-          border-color: var(--error-color);
+          background: var(--md-sys-color-error-container, var(--error-color));
+          color: var(--md-sys-color-on-error-container, #111);
         }
 
         button.paused {
@@ -469,9 +556,9 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           gap: 6px;
           min-height: 38px;
           padding: 0 10px;
-          border: 1px solid var(--divider-color);
-          border-radius: 8px;
-          background: var(--secondary-background-color);
+          border: 1px solid var(--md-sys-color-outline-variant, var(--divider-color));
+          border-radius: var(--md-sys-shape-corner-full, 9999px);
+          background: var(--md-sys-color-surface-container-high, var(--secondary-background-color));
           white-space: nowrap;
         }
 
@@ -560,7 +647,9 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         .stat-card {
           padding: 14px;
-          border: 1px solid var(--divider-color);
+          border: 0;
+          background: var(--md-sys-color-surface-container, var(--secondary-background-color));
+          border-radius: var(--md-sys-shape-corner-large, 16px);
           box-shadow: none;
         }
 
@@ -590,7 +679,9 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         .panel-card {
           padding: 14px;
-          border: 1px solid var(--divider-color);
+          border: 0;
+          background: var(--md-sys-color-surface-container, var(--secondary-background-color));
+          border-radius: var(--md-sys-shape-corner-large, 16px);
           box-shadow: none;
           overflow: hidden;
         }
@@ -601,28 +692,116 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           margin-bottom: 12px;
         }
 
+        .chart-wrap {
+          position: relative;
+        }
+
         .chart {
-          height: 180px;
+          height: 220px;
           display: flex;
           align-items: end;
           gap: 3px;
-          border-bottom: 1px solid var(--divider-color);
-          padding-top: 8px;
+          padding: 14px 4px 0;
+          border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--divider-color));
+          background:
+            linear-gradient(
+              to top,
+              color-mix(in srgb, var(--md-sys-color-outline-variant, var(--divider-color)) 45%, transparent) 1px,
+              transparent 1px
+            );
+          background-size: 100% 25%;
+        }
+
+        .chart-point {
+          position: relative;
+          flex: 1 1 0;
+          height: 100%;
+          min-width: 4px;
+          display: flex;
+          align-items: end;
+          cursor: crosshair;
+          border-radius: 6px 6px 0 0;
         }
 
         .bar {
-          flex: 1 1 0;
-          min-width: 2px;
-          background: var(--primary-color);
-          border-radius: 3px 3px 0 0;
-          opacity: 0.8;
+          position: relative;
+          width: 100%;
+          min-height: 2px;
+          background: var(--md-sys-color-primary, var(--primary-color));
+          border-radius: 6px 6px 2px 2px;
+          opacity: 0.78;
+          transition: opacity 120ms ease, filter 120ms ease;
+        }
+
+        .bar-blocked {
+          position: absolute;
+          inset: auto 0 0;
+          background: var(--md-sys-color-error, var(--error-color));
+          border-radius: 0 0 2px 2px;
+          opacity: 0.95;
+          pointer-events: none;
+        }
+
+        .chart-point:hover .bar,
+        .chart-point.active .bar {
+          opacity: 1;
+          filter: brightness(1.08);
+        }
+
+        .chart-tooltip {
+          position: absolute;
+          z-index: 4;
+          min-width: 150px;
+          padding: 10px 12px;
+          border-radius: var(--md-sys-shape-corner-medium, 12px);
+          background: var(--md-sys-color-inverse-surface, #2f3036);
+          color: var(--md-sys-color-inverse-on-surface, #f2f0f7);
+          box-shadow: var(--md-sys-elevation-level2, 0 4px 12px rgba(0,0,0,.22));
+          font-size: 12px;
+          line-height: 1.45;
+          pointer-events: none;
+          transform: translate(-50%, calc(-100% - 10px));
+          opacity: 0;
+          transition: opacity 90ms ease;
+        }
+
+        .chart-tooltip.visible {
+          opacity: 1;
+        }
+
+        .chart-tooltip strong {
+          display: block;
+          margin-bottom: 4px;
+          font-size: 13px;
+        }
+
+        .chart-legend {
+          display: flex;
+          gap: 14px;
+          align-items: center;
+          margin-top: 10px;
+          color: var(--md-sys-color-on-surface-variant, var(--secondary-text-color));
+          font-size: 11px;
+        }
+
+        .legend-dot {
+          width: 9px;
+          height: 9px;
+          border-radius: 999px;
+          display: inline-block;
+          margin-right: 5px;
+          background: var(--md-sys-color-primary, var(--primary-color));
+        }
+
+        .legend-dot.blocked-dot {
+          background: var(--md-sys-color-error, var(--error-color));
         }
 
         .chart-caption {
           display: flex;
           justify-content: space-between;
-          margin-top: 6px;
-          color: var(--secondary-text-color);
+          margin-top: 8px;
+          color: var(--md-sys-color-on-surface-variant, var(--secondary-text-color));
           font-size: 11px;
         }
 
@@ -961,9 +1140,17 @@ class TechnitiumDnsLivePanel extends HTMLElement {
     const container = this.shadowRoot.querySelector("#stats-data");
 
     if (status) {
+      const updated = this._statsLastUpdated
+        ? ` · updated ${this._statsLastUpdated.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}`
+        : "";
+
       status.textContent =
         this._statsStatus ||
-        "Statistics refresh every 30 seconds while this tab is open.";
+        `${this._statsPeriodDescription()}${updated} · auto refresh 30 s`;
     }
 
     if (!container) {
@@ -985,20 +1172,42 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
     const chart = this._stats.mainChartData || {};
     const labels = chart.labels || [];
-    const dataset = chart.datasets?.[0] || {};
-    const values = dataset.data || [];
+    const datasets = chart.datasets || [];
+    const totalDataset =
+      datasets.find((item) => item.label === "Total") || datasets[0] || {};
+    const blockedDataset =
+      datasets.find((item) => item.label === "Blocked") || {};
+    const values = totalDataset.data || [];
+    const blockedValues = blockedDataset.data || [];
     const max = Math.max(...values.map(Number), 1);
 
     const bars = values.length
       ? values
           .map((value, index) => {
-            const height = Math.max(2, Math.round((Number(value) / max) * 100));
+            const total = Number(value || 0);
+            const blockedValue = Number(blockedValues[index] || 0);
+            const height = Math.max(2, Math.round((total / max) * 100));
+            const blockedHeight = total
+              ? Math.max(0, Math.min(100, (blockedValue / total) * 100))
+              : 0;
             const label = labels[index] || "";
-            return `<div
-              class="bar"
-              style="height: ${height}%"
-              title="${this._escape(label)}: ${this._formatNumber(value)}"
-            ></div>`;
+
+            return `
+              <div
+                class="chart-point"
+                data-chart-index="${index}"
+                data-label="${this._escape(label)}"
+                data-total="${total}"
+                data-blocked="${blockedValue}"
+              >
+                <div class="bar" style="height: ${height}%">
+                  <div
+                    class="bar-blocked"
+                    style="height: ${blockedHeight}%"
+                  ></div>
+                </div>
+              </div>
+            `;
           })
           .join("")
       : "";
@@ -1056,10 +1265,20 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           <div class="panel-title">Queries over time</div>
           ${bars
             ? `
-              <div class="chart">${bars}</div>
+              <div class="chart-wrap">
+                <div id="chart-tooltip" class="chart-tooltip"></div>
+                <div class="chart">${bars}</div>
+              </div>
               <div class="chart-caption">
-                <span>${this._escape(labels[0] || "")}</span>
-                <span>${this._escape(labels[labels.length - 1] || "")}</span>
+                <span>${this._escape(this._formatStatsAxisLabel(labels[0] || ""))}</span>
+                <span>${this._escape(
+                  this._formatStatsAxisLabel(labels[labels.length - 1] || ""),
+                )}</span>
+              </div>
+              <div class="chart-legend">
+                <span><span class="legend-dot"></span>Queries</span>
+                <span><span class="legend-dot blocked-dot"></span>Blocked</span>
+                <span>Hover or tap a bar for exact values</span>
               </div>
             `
             : `<div class="empty">No chart data.</div>`
@@ -1067,7 +1286,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         </div>
 
         <div class="panel-card">
-          <div class="panel-title">Top domains</div>
+          <div class="panel-title">Top queried domains</div>
           ${renderTop(this._stats.topDomains)}
         </div>
 
@@ -1082,6 +1301,49 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         </div>
       </div>
     `;
+
+    const tooltip = container.querySelector("#chart-tooltip");
+    const chartWrap = container.querySelector(".chart-wrap");
+    const points = container.querySelectorAll("[data-chart-index]");
+
+    const showTooltip = (point) => {
+      if (!tooltip || !chartWrap || !point) {
+        return;
+      }
+
+      points.forEach((item) => item.classList.toggle("active", item === point));
+
+      const label = point.dataset.label || "";
+      const total = Number(point.dataset.total || 0);
+      const blockedValue = Number(point.dataset.blocked || 0);
+      const pointRect = point.getBoundingClientRect();
+      const wrapRect = chartWrap.getBoundingClientRect();
+
+      tooltip.innerHTML = `
+        <strong>${this._escape(this._formatStatsTooltipLabel(label))}</strong>
+        <div>Queries: <b>${this._formatNumber(total)}</b></div>
+        <div>Blocked: <b>${this._formatNumber(blockedValue)}</b></div>
+      `;
+      tooltip.style.left = `${pointRect.left - wrapRect.left + pointRect.width / 2}px`;
+      tooltip.style.top = `${pointRect.top - wrapRect.top}px`;
+      tooltip.classList.add("visible");
+    };
+
+    const hideTooltip = () => {
+      tooltip?.classList.remove("visible");
+      points.forEach((item) => item.classList.remove("active"));
+    };
+
+    points.forEach((point) => {
+      point.addEventListener("mouseenter", () => showTooltip(point));
+      point.addEventListener("mouseleave", hideTooltip);
+      point.addEventListener("click", (event) => {
+        event.stopPropagation();
+        showTooltip(point);
+      });
+    });
+
+    chartWrap?.addEventListener("mouseleave", hideTooltip);
   }
 }
 
