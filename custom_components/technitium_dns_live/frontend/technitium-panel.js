@@ -481,7 +481,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
         .tabs button {
           border: 0;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
+          border-radius: var(--ha-border-radius-md, 9999px);
           background: transparent;
           color: var(--md-sys-color-on-surface-variant, var(--secondary-text-color));
           font-weight: 600;
@@ -499,7 +499,6 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           gap: 8px;
           align-items: center;
           padding: 14px;
-          border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--divider-color));
         }
 
         .title {
@@ -512,8 +511,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
         input,
         button {
           min-height: 40px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          border: 1px solid var(--md-sys-color-outline, var(--divider-color));
+          border-radius: var(--ha-border-radius-md, 9999px);
+          border: 0 none;
           background: var(--md-sys-color-surface-container-high, var(--secondary-background-color));
           color: var(--md-sys-color-on-surface, var(--primary-text-color));
           padding: 7px 10px;
@@ -556,8 +555,8 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           gap: 6px;
           min-height: 38px;
           padding: 0 10px;
-          border: 1px solid var(--md-sys-color-outline-variant, var(--divider-color));
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
+          border: 0 none;
+          border-radius: var(--ha-border-radius-md, 9999px);
           background: var(--md-sys-color-surface-container-high, var(--secondary-background-color));
           white-space: nowrap;
         }
@@ -579,7 +578,6 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           grid-template-columns: minmax(160px, 1fr) auto auto;
           gap: 8px;
           padding: 12px 14px;
-          border-bottom: 1px solid var(--divider-color);
         }
 
         .status {
@@ -587,7 +585,6 @@ class TechnitiumDnsLivePanel extends HTMLElement {
           padding: 8px 14px;
           color: var(--secondary-text-color);
           font-size: 13px;
-          border-bottom: 1px solid var(--divider-color);
         }
 
         .row {
@@ -1169,7 +1166,7 @@ class TechnitiumDnsLivePanel extends HTMLElement {
 
       status.textContent =
         this._statsStatus ||
-        `${this._statsPeriodDescription()}${through}${updated} · auto refresh 30 s`;
+        `${this._statsPeriodDescription()}${through}${updated}`;
     }
 
     if (!container) {
@@ -1297,7 +1294,6 @@ class TechnitiumDnsLivePanel extends HTMLElement {
               <div class="chart-legend">
                 <span><span class="legend-dot"></span>Queries</span>
                 <span><span class="legend-dot blocked-dot"></span>Blocked</span>
-                <span>Hover or tap a bar for exact values</span>
               </div>
             `
             : `<div class="empty">No chart data.</div>`
